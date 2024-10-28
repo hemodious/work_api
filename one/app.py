@@ -4,7 +4,8 @@ import sqlite3
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import  MIMEText
-
+import random
+import string
 
 app = Flask(__name__)
 
@@ -25,7 +26,7 @@ def user():
     if request.method == 'GET':
         cursor= conn.execute("SELECT * FROM user")
         users=[
-            dict(id=row[0],name=row[1],telephone=row[2],complaint=row[3],email=row[4],category=row[5],image=[6])
+            dict(id=row[0],name=row[1],telephone=row[2],complaint=row[3],email=row[4],category=row[5],image=[6],complaint_id=row[7])
             for row in cursor.fetchall()
         ]
 
@@ -41,9 +42,21 @@ def user():
         new_category=request.form['category']
         new_image=request.files['image']
         image_data = new_image.read() 
-        sql="""INSERT INTO user (name,telephone,complaint,email,category,image)
-        VALUES (?,?,?,?,?,?)"""
-        cursor=cursor.execute(sql,(new_name,new_telephone,new_complaint,new_email,new_category,image_data))
+        characters=string.ascii_letters+ string.digits*4
+
+        ans=''.join(random.choices(characters, k=7) )
+        store=[] 
+        for good in store:
+         if good == ans :
+            return("already exists")
+         else:
+            store.append(ans)  
+            return(ans)   
+        new_complaint_id=ans
+        sql="""INSERT INTO user (name,telephone,complaint,email,category,image,complaint_id)
+        VALUES (?,?,?,?,?,?,?)"""
+        
+        cursor=cursor.execute(sql,(new_name,new_telephone,new_complaint,new_email,new_category,image_data,new_complaint_id))
         conn.commit()
         #code to send  email to clients
         server=smtplib.SMTP('smtp.gmail.com',587)
@@ -53,7 +66,7 @@ def user():
         msg['From']="moorleinternship@gmail.com"
         msg['To']=new_email
         msg['Subject']="COMPLAINT"
-        body=f"Dear {new_name} ,your complaint has been recieved ,our staff will contact you soon\n thank you "
+        body=f"Dear {new_name} ,your complaint in \033category {new_category} has been recieved your complaint ID is \033{new_complaint_id} ,our staff will contact you soon\n thank you "
         msg.attach(MIMEText(body,'plain'))
         server.sendmail("moorleinternship@gmail.com",new_email,msg.as_string())
         server.quit()
@@ -71,8 +84,8 @@ def user():
         msg2['From']="moorleinternship@gmail.com"
         msg2['To']="michaelopoku790@gmail.com"
         msg2['Subject']="NEW REPORT"
-        body1=f"Dear Emmanuel ,{new_name} has  submitted a complaint in category {new_category},please contact him/her soon\n thank you "
-        body2=f"Dear Michael ,{new_name} has  submitted a complaint in category {new_category} ,please contact him/her soon\n thank you "
+        body1=f"Dear Emmanuel ,{new_name},with id \033{new_complaint_id} has  submitted a complaint in \033 category {new_category},please contact him/her soon\n thank you "
+        body2=f"Dear Michael ,{new_name}, with id \033{new_complaint_id} has  submitted a complaint in \033category {new_category} ,please contact him/her soon\n thank you "
         #a list issues staff one should handle
         checker=["transaction issue","account management issue","security issues"]
         for check in checker:
@@ -87,7 +100,7 @@ def user():
         server2.quit()
        
        
-    return jsonify({"message":"user created"}),201
+    return jsonify({"complaint ID":new_complaint_id}),201
        
 
 @app.route('/staff1',methods=['GET'])
@@ -97,7 +110,7 @@ def staff1():
     issues=('transaction issue','account management issue','security issue')
     cursor.execute('SELECT * FROM user WHERE category IN  (?,?,?)',issues)
     users=[
-            dict(id=row[0],name=row[1],telephone=row[2],complaint=row[3],email=row[4],category=row[5],image=[6])
+            dict(id=row[0],name=row[1],telephone=row[2],complaint=row[3],email=row[4],category=row[5],image=[6],complaint_id=row[7])
             for row in cursor.fetchall()
         ]
     return users
@@ -109,7 +122,7 @@ def staff2():
     issues=('crash issue','perfomance management issue','others')
     cursor.execute('SELECT * FROM user WHERE category IN  (?,?,?)',issues)
     users=[
-            dict(id=row[0],name=row[1],telephone=row[2],complaint=row[3],email=row[4],category=row[5],image=[6])
+            dict(id=row[0],name=row[1],telephone=row[2],complaint=row[3],email=row[4],category=row[5],image=[6],complaint_id=row[7])
             for row in cursor.fetchall()
         ]
     return users
