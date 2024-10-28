@@ -12,4 +12,6 @@ sql_query=""" CREATE TABLE user (
     email  text NOT NULL,
     category text NOT NULL,
 )"""
-cursor.execute("""ALTER TABLE user ADD COLUMN image BLOB""")
+cursor.execute("""ALTER TABLE user ADD COLUMN complaint_id""")
+conn.commit()
+conn.close()
